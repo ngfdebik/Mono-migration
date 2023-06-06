@@ -2,44 +2,31 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Model;
 
-class User extends Authenticatable
+class User extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    public static function getRandomUserId(){
+        return DB::table('users')
+                ->select('id')
+                ->inRandomOrder()
+                ->first();
+    }
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-    ];
+    public static function getUserByReviews()
+    {
+        return DB::select('select u.name from users as u 
+        join reviews as r on u.id = r.user_id 
+        join products as p on r.product_id = p.id 
+        join ratings as rat on u.id = rat.user_id 
+        where (select count(*) from reviews where user_id = u.id) > 10 and 
+        p.price > 3000 and 
+        (select sum(rating)/count(*) from ratings where u.id = ratings.user_id) > 4 
+        group by name');
+    }
 }
